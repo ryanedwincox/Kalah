@@ -42,33 +42,78 @@ class ai:
     # if elapsed_time * 1000 >= t:
     #    return result immediately 
     def move(self, a, b, a_fin, b_fin, t):
-        #For test only: return a random move
-        r = []
-        for i in range(6):
-            if a[i] != 0:
-                r.append(i)
-        # To test the execution time, use time and file modules
-        # In your experiments, you can try different depth, for example:
-        f = open('time.txt', 'a') #append to time.txt so that you can see running time for all moves.
-        # Make sure to clean the file before each of your experiment
-        for d in [3, 5, 7]: #You should try more
-            f.write('depth = '+str(d)+'\n')
-            t_start = time.time()
-            self.minimax(depth = d)
-            f.write(str(time.time()-t_start)+'\n')
-        f.close()
-        return r[random.randint(0, len(r)-1)]
-        #But remember in your final version you should choose only one depth according to your CPU speed (TA's is 3.4GHz)
-        #and remove timing code. 
+        # #For test only: return a random move
+        # r = []
+        # for i in range(6):
+            # if a[i] != 0:
+                # r.append(i)
+        # # To test the execution time, use time and file modules
+        # # In your experiments, you can try different depth, for example:
+        # f = open('time.txt', 'a') #append to time.txt so that you can see running time for all moves.
+        # # Make sure to clean the file before each of your experiment
+        # for d in [3, 5, 7]: #You should try more
+            # f.write('depth = '+str(d)+'\n')
+            # t_start = time.time()
+            # self.minimax(depth = d)
+            # f.write(str(time.time()-t_start)+'\n')
+        # f.close()
+        # return r[random.randint(0, len(r)-1)]
+        # #But remember in your final version you should choose only one depth according to your CPU speed (TA's is 3.4GHz)
+        # #and remove timing code. 
         
-        #Comment all the code above and start your code here
+        # *****
+        
+        # create starting state from input parameter
+        initial = state(alpha, beta, a_fin, b_fin)
+        
+        # set the maximum depth the search should execute
+        depth = 4
+        
+        # initial call of the minimax function
+        minimax(initial, depth, -infinity, +infinity, True)
 
-    # calling function
-    def minimax(self, depth):
-        #example: doing nothing but wait 0.1*depth sec
-        time.sleep(0.1*depth)
-
-
+    # minimax search function with alpha-beta pruning
+    def minimax(self, state, depth, alpha, beta, max):
+        # base case
+        # reached max depth
+        # game is over if either player has more than 36 in their kalah
+        if (depth == 0 or a_fin > 36 or b_fin > 36): 
+            return heuristic # ****
+        # Max players turn
+        if (max): 
+            # consider each of the five possible moves
+            # TODO: order moves for efficiency 
+            # TODO: don't consider moves with no stones
+            possibleMoves = [0,1,2,3,4,5]
+            for move in possibleMoves: # **** 
+                # get new game state after the move has been taken
+                newState = takeTurn(state, move, max)
+                # make recursive call. Decrease depth and switch turns
+                alpha = max(alpha, minimax(newState, depth-1, alpha, beta, False)
+            if (beta <= alpha):
+                break # beta cut-off
+            return alpha
+        # Min players turn
+        else:
+            # consider each of the five possible moves
+            # TODO: order moves for efficiency 
+            # TODO: don't consider moves with no stones
+            for child in parent: # **** 
+                # make recursive call. Decrease depth and switch turns
+                beta = min(beta, minimax(child, depth-1, alpha, beta, True)
+            if (beta <= alpha):
+                break # alpha cut-off
+            return beta
+                
+    # Returns the next game state based on the input parameters
+    # current state
+    # chosen move
+    # whos turn
+    def takeTurn(self, state, move, max):
+        # player a's turn
+        if max:
+            rocks = state.a[move]
+            
 
 
 
