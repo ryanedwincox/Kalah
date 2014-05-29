@@ -70,7 +70,7 @@ class ai:
         initial = ai.state(a, b, a_fin, b_fin)
         
         # set the maximum depth the search should execute
-        depth = 4
+        depth = 5
         
         # initial call of the minimax function
         # the helper method returns the desired move
@@ -88,23 +88,22 @@ class ai:
         for move in possibleMoves: 
             print("move " + str(move)) # ****
             # don't consider moves with no stones
-            if (state.a[move] == 0):
-                break
-            # get new game state after the move has been taken
-            newState = self.takeTurn(state, move, max)
-            print("first max turn")
-            self.display(newState) # ****
-            # if the depth is 0 return heuristic value without recursing 
-            if (depth == 1):
-                alpha = self.objective(newState, max)
-                print ("move: " + str(move) + "\theuristic value: " + str(alpha)) # ****
-            else:
-                # make recursive call. Decrease depth and switch turns
-                alpha = self.minimax(newState, depth-1, alpha, beta, False)
-            # keeps track of the highest alpha and the associated best move
-            if (alpha > highestAlpha):
-                highestAlpha = alpha
-                bestMove = move
+            if (state.a[move] > 0):
+                # get new game state after the move has been taken
+                newState = self.takeTurn(state, move, max)
+                print("first max turn")
+                self.display(newState) # ****
+                # if the depth is 0 return heuristic value without recursing 
+                if (depth == 1):
+                    alpha = self.objective(newState, max)
+                    print ("move: " + str(move) + "\theuristic value: " + str(alpha)) # ****
+                else:
+                    # make recursive call. Decrease depth and switch turns
+                    alpha = self.minimax(newState, depth-1, alpha, beta, False)
+                # keeps track of the highest alpha and the associated best move
+                if (alpha > highestAlpha):
+                    highestAlpha = alpha
+                    bestMove = move
         return bestMove
         
     # minimax search function with alpha-beta pruning
@@ -122,18 +121,16 @@ class ai:
             possibleMoves = [0,1,2,3,4,5]
             for move in possibleMoves: 
                 # don't consider moves with no stones
-                if (state.a[move] == 0):
-                    print("skip move " + str(move))
-                    break
-                # get new game state after the move has been taken
-                newState = self.takeTurn(state, move, mx)
-                print("max turn")
-                self.display(newState) # ****
-                # make recursive call. Decrease depth and switch turns
-                alpha = max(alpha, self.minimax(newState, depth-1, alpha, beta, False))
-                if (beta <= alpha):
-                    print("beta cut-off")
-                    break # beta cut-off
+                if (state.a[move] > 0):
+                    # get new game state after the move has been taken
+                    newState = self.takeTurn(state, move, mx)
+                    print("max turn")
+                    self.display(newState) # ****
+                    # make recursive call. Decrease depth and switch turns
+                    alpha = max(alpha, self.minimax(newState, depth-1, alpha, beta, False))
+                    if (beta <= alpha):
+                        print("beta cut-off")
+                        break # beta cut-off
             return alpha
         # Min players turn
         else:
@@ -142,18 +139,16 @@ class ai:
             possibleMoves = [0,1,2,3,4,5]
             for move in possibleMoves:  
                 # don't consider moves with no stones
-                if (state.b[move] == 0):
-                    print("skip move " + str(move))
-                    break
-                # get new game state after the move has been taken
-                newState = self.takeTurn(state, move, mx)
-                print("min turn")
-                self.display(newState) # ****
-                # make recursive call. Decrease depth and switch turns
-                beta = min(beta, self.minimax(newState, depth-1, alpha, beta, True))
-                if (beta <= alpha): # **** correct?
-                    print("alpha cut-off")
-                    break # alpha cut-off
+                if (state.b[move] > 0):
+                    # get new game state after the move has been taken
+                    newState = self.takeTurn(state, move, mx)
+                    print("min turn")
+                    self.display(newState) # ****
+                    # make recursive call. Decrease depth and switch turns
+                    beta = min(beta, self.minimax(newState, depth-1, alpha, beta, True))
+                    if (beta <= alpha): # **** correct?
+                        print("alpha cut-off")
+                        break # alpha cut-off
             return beta
     
     # rocks in kalah = 10 points
@@ -195,7 +190,7 @@ class ai:
                         A = 0
                     
             # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
-            if (A != 6 and state.a[A] == 1 and rocks > 6):
+            if (A != 6 and state.a[A] == 1 and rocks > 0):
                 state.a_fin = state.a_fin + state.b[5-A]
                 state.b[5-A] = 0;
             
@@ -239,7 +234,7 @@ class ai:
                         B = 0
                     
             # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
-            if (B != 6 and state.b[B] == 1 and rocks > 6):
+            if (B != 6 and state.b[B] == 1 and rocks > 0):
                 state.b_fin = state.b_fin + state.a[5-B]
                 state.a[5-B] = 0;
             
