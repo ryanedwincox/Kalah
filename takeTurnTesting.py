@@ -18,6 +18,8 @@ def display(state):
         aString = aString + str(state.a[i]) + " "
     print aString
         
+        
+        
 # Returns the next game state based on the input parameters
 # current state
 # chosen move
@@ -54,11 +56,14 @@ def takeTurn(state, move, max):
             state.a_fin = state.a_fin + state.b[5-A]
             state.b[5-A] = 0;
         
-        print (str(A))
-        print (str(B))
         # if the last rock lands in the kalah take another turn
         if (A == 6 and B == 0):
             print("max takes another turn")
+            
+        # if there are no rocks on a's side all b's rocks go to b's kalah
+        if (state.a[0] == 0 and state.a[1] == 0 and state.a[2] == 0 and state.a[3] == 0 and state.a[4] == 0 and state.a[5] == 0):
+            state.b_fin = state.b_fin + state.b[0] + state.b[1] + state.b[2] + state.b[3] + state.b[4] + state.b[5]
+            
     else: # mins turn
         # get numbers of rocks in chosen hole
         rocks = state.b[move]
@@ -92,17 +97,20 @@ def takeTurn(state, move, max):
         # if the last rock lands in the kalah take another turn
         if (B == 6 and A == 0):
             print("min takes another turn")
+            
+        # if there are no rocks on b's side all a's rocks go to a's kalah
+        if (state.b[0] == 0 and state.b[1] == 0 and state.b[2] == 0 and state.b[3] == 0 and state.b[4] == 0 and state.b[5] == 0):
+            state.a_fin = state.a_fin + state.a[0] + state.a[1] + state.a[2] + state.a[3] + state.a[4] + state.a[5]
     return state
  
 #initialize a game state, call the takeTurn method and display the results
-move = 0
+move = 5
 max = False
-bStart = [19,0,0,0,0,0]
+bStart = [0,0,0,0,0,1]
 aStart = [0]*6
-# bStart = [0]*6
 for i in range(0,6):
     aStart[i] = 2
-    # bStart[i] = 4
+    # aStart[i] = 4
 startingBoard = state(aStart, bStart, 0, 0)
 display(startingBoard)
 newState = takeTurn(startingBoard, move, max)

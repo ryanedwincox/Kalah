@@ -1,21 +1,24 @@
 import time
 import random 
 import io
+import sys
+import copy
 
 class key:
     def key(self):
         return "10jifn2eonvgp1o2ornfdlf-1230"
-
+        
 class ai:
     def __init__(self):
         pass
 
     class state:
-        def __init__(self, a, b, a_fin, b_fin):
+        def __init__(self, a=[0,0,0,0,0,0], b=[0,0,0,0,0,0], a_fin=0, b_fin=0):
             self.a = a
             self.b = b
             self.a_fin = a_fin
             self.b_fin = b_fin
+
 
     # Kalah:
     #         b[5]  b[4]  b[3]  b[2]  b[1]  b[0]
@@ -63,125 +66,212 @@ class ai:
         
         # *****
         
-        # create starting state from input parameter
-        initial = state(alpha, beta, a_fin, b_fin)
+        # create starting state from input parameters
+        initial = ai.state(a, b, a_fin, b_fin)
         
         # set the maximum depth the search should execute
         depth = 4
         
         # initial call of the minimax function
-        minimax(initial, depth, -infinity, +infinity, True)
+        # the helper method returns the desired move
+        return ai.minimaxHelper(self, initial, depth-1, -sys.maxint, sys.maxint, True)
 
+    # This helper method does the first step of the recursion so that it can identify the move that returns the highest alpha
+    def minimaxHelper(self, state, depth, alpha, beta, max):
+        # In this method it is always max's turn
+        
+        # consider each of the six possible moves
+        # TODO: order moves for efficiency 
+        bestMove = 0
+        highestAlpha = -sys.maxint
+        possibleMoves = [0,1,2,3,4,5]
+        for move in possibleMoves: 
+            print("move " + str(move)) # ****
+            # don't consider moves with no stones
+            if (state.a[move] == 0):
+                break
+            # get new game state after the move has been taken
+            newState = self.takeTurn(state, move, max)
+            print("first max turn")
+            self.display(newState) # ****
+            # if the depth is 0 return heuristic value without recursing 
+            if (depth == 1):
+                alpha = self.objective(newState, max)
+                print ("move: " + str(move) + "\theuristic value: " + str(alpha)) # ****
+            else:
+                # make recursive call. Decrease depth and switch turns
+                alpha = self.minimax(newState, depth-1, alpha, beta, False)
+            # keeps track of the highest alpha and the associated best move
+            if (alpha > highestAlpha):
+                highestAlpha = alpha
+                bestMove = move
+        return bestMove
+        
     # minimax search function with alpha-beta pruning
-    def minimax(self, state, depth, alpha, beta, max):
+    def minimax(self, state, depth, alpha, beta, mx):
         # base case
         # reached max depth
         # game is over if either player has more than 36 in their kalah
-        if (depth == 0 or a_fin > 36 or b_fin > 36): 
-            return heuristic # ****
+        if (depth == 0 or state.a_fin > 36 or state.b_fin > 36): 
+            print ("Heuristic Value: " + str(self.objective(state, mx)))
+            return self.objective(state, mx) # ****
         # Max players turn
-        if (max): 
-            # consider each of the five possible moves
+        if (mx): 
+            # consider each of the six possible moves
             # TODO: order moves for efficiency 
-            # TODO: don't consider moves with no stones
             possibleMoves = [0,1,2,3,4,5]
-            for move in possibleMoves: # **** 
+            for move in possibleMoves: 
+                # don't consider moves with no stones
+                if (state.a[move] == 0):
+                    print("skip move " + str(move))
+                    break
                 # get new game state after the move has been taken
-                newState = takeTurn(state, move, max)
+                newState = self.takeTurn(state, move, mx)
+                print("max turn")
+                self.display(newState) # ****
                 # make recursive call. Decrease depth and switch turns
-                alpha = max(alpha, minimax(newState, depth-1, alpha, beta, False)
-            if (beta <= alpha):
-                break # beta cut-off
+                alpha = max(alpha, self.minimax(newState, depth-1, alpha, beta, False))
+                if (beta <= alpha):
+                    print("beta cut-off")
+                    break # beta cut-off
             return alpha
         # Min players turn
         else:
             # consider each of the five possible moves
             # TODO: order moves for efficiency 
-            # TODO: don't consider moves with no stones
-            for child in parent: # **** 
+            possibleMoves = [0,1,2,3,4,5]
+            for move in possibleMoves:  
+                # don't consider moves with no stones
+                if (state.b[move] == 0):
+                    print("skip move " + str(move))
+                    break
+                # get new game state after the move has been taken
+                newState = self.takeTurn(state, move, mx)
+                print("min turn")
+                self.display(newState) # ****
                 # make recursive call. Decrease depth and switch turns
-                beta = min(beta, minimax(child, depth-1, alpha, beta, True)
-            if (beta <= alpha):
-                break # alpha cut-off
+                beta = min(beta, self.minimax(newState, depth-1, alpha, beta, True))
+                if (beta <= alpha): # **** correct?
+                    print("alpha cut-off")
+                    break # alpha cut-off
             return beta
-                
-   # Returns the next game state based on the input parameters
-# current state
-# chosen move
-# whos turn
-def takeTurn(state, move, max):
-    # player a's turn
-    if max:
-        # get numbers of rocks in chosen hole
-        rocks = state.a[move]
-        # take all the rocks from the chosen hole
-        state.a[move] = 0
-        # put 1 rock in each hole till you run out
-        A = move + 1 # start in the next hole
-        B = 6
-        for i in range(0, rocks):
-            if (A < 6):
-                state.a[A] = state.a[A] + 1
-                if (i != rocks - 1):
-                    A = A + 1 # on the last move don't increment
-            elif (A == 6 and B == 6): # B==6 insures this case only occurs once
-                state.a_fin = state.a_fin + 1
-                if (state.a_fin > 36): # game over
-                    print("max wins")
-                    break
-                B = 0
-            elif (B < 6):
-                state.b[B] = state.b[B] + 1
-                B = B + 1
-                if (B == 6):
-                    A = 0
-                
-        # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
-        if (A != 6 and state.a[A] == 1 and rocks > 6):
-            state.a_fin = state.a_fin + state.b[5-A]
-            state.b[5-A] = 0;
-        
-        print (str(A))
-        print (str(B))
-        # if the last rock lands in the kalah take another turn
-        if (A == 6 and B == 0):
-            print("max takes another turn")
-    else: # mins turn
-        # get numbers of rocks in chosen hole
-        rocks = state.b[move]
-        # take all the rocks from the chosen hole
-        state.b[move] = 0
-        # put 1 rock in each hole till you run out
-        B = move + 1 # start in the next hole
-        A = 6
-        for i in range(0, rocks):
-            if (B < 6):
-                state.b[B] = state.b[B] + 1
-                if (i != rocks - 1):
-                    B = B + 1 # on the last move don't increment
-            elif (B == 6 and A == 6): # A==6 insures this case only occurs once
-                state.b_fin = state.b_fin + 1
-                if (state.b_fin > 36): # game over
-                    print("min wins")
-                    break
-                A = 0
-            elif (A < 6):
-                state.a[A] = state.a[A] + 1
-                A = A + 1
-                if (A == 6):
+    
+    # rocks in kalah = 10 points
+    # rocks in opposite kalah = -10 points
+    def objective(self, state, max):
+        return state.a_fin * 10 + state.b_fin * -10
+    
+    # Returns the next game state based on the input parameters
+    # current state
+    # chosen move
+    # whos turn
+    def takeTurn(self, oldState, move, max):
+        # deep copy so original state is not modified
+        state = copy.deepcopy(oldState)
+        # player a's turn
+        if max:
+            # get numbers of rocks in chosen hole
+            rocks = state.a[move]
+            # take all the rocks from the chosen hole
+            state.a[move] = 0
+            # put 1 rock in each hole till you run out
+            A = move + 1 # start in the next hole
+            B = 6
+            for i in range(0, rocks):
+                if (A < 6):
+                    state.a[A] = state.a[A] + 1
+                    if (i != rocks - 1):
+                        A = A + 1 # on the last move don't increment
+                elif (A == 6 and B == 6): # B==6 insures this case only occurs once
+                    state.a_fin = state.a_fin + 1
+                    if (state.a_fin > 36): # game over
+                        print("max wins")
+                        break
                     B = 0
-                
-        # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
-        if (B != 6 and state.b[B] == 1 and rocks > 6):
-            state.b_fin = state.b_fin + state.a[5-B]
-            state.a[5-B] = 0;
-        
-        # if the last rock lands in the kalah take another turn
-        if (B == 6 and A == 0):
-            print("min takes another turn")
-    return state
+                elif (B < 6):
+                    state.b[B] = state.b[B] + 1
+                    B = B + 1
+                    if (B == 6):
+                        A = 0
                     
+            # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
+            if (A != 6 and state.a[A] == 1 and rocks > 6):
+                state.a_fin = state.a_fin + state.b[5-A]
+                state.b[5-A] = 0;
             
+            # if the last rock lands in the kalah take another turn
+            if (A == 6 and B == 0):
+                print("max takes another turn")
+                
+            # if there are no rocks on a's side all b's rocks go to b's kalah
+            if (state.a[0] == 0 and state.a[1] == 0 and state.a[2] == 0 and state.a[3] == 0 and state.a[4] == 0 and state.a[5] == 0):
+                state.b_fin = state.b_fin + state.b[0] + state.b[1] + state.b[2] + state.b[3] + state.b[4] + state.b[5]
+                state.b[0] = 0
+                state.b[1] = 0
+                state.b[2] = 0
+                state.b[3] = 0
+                state.b[4] = 0
+                state.b[5] = 0
+                
+        else: # mins turn
+            # get numbers of rocks in chosen hole
+            rocks = state.b[move]
+            # take all the rocks from the chosen hole
+            state.b[move] = 0
+            # put 1 rock in each hole till you run out
+            B = move + 1 # start in the next hole
+            A = 6
+            for i in range(0, rocks):
+                if (B < 6):
+                    state.b[B] = state.b[B] + 1
+                    if (i != rocks - 1):
+                        B = B + 1 # on the last move don't increment
+                elif (B == 6 and A == 6): # A==6 insures this case only occurs once
+                    state.b_fin = state.b_fin + 1
+                    if (state.b_fin > 36): # game over
+                        print("min wins")
+                        break
+                    A = 0
+                elif (A < 6):
+                    state.a[A] = state.a[A] + 1
+                    A = A + 1
+                    if (A == 6):
+                        B = 0
+                    
+            # if the last rock lands in an empty spot on the A side then take all the opposite rocks and put them in A's kalah
+            if (B != 6 and state.b[B] == 1 and rocks > 6):
+                state.b_fin = state.b_fin + state.a[5-B]
+                state.a[5-B] = 0;
+            
+            # if the last rock lands in the kalah take another turn
+            if (B == 6 and A == 0):
+                print("min takes another turn")
+                
+            # if there are no rocks on b's side all a's rocks go to a's kalah
+            if (state.b[0] == 0 and state.b[1] == 0 and state.b[2] == 0 and state.b[3] == 0 and state.b[4] == 0 and state.b[5] == 0):
+                state.a_fin = state.a_fin + state.a[0] + state.a[1] + state.a[2] + state.a[3] + state.a[4] + state.a[5]
+                state.a[0] = 0
+                state.a[1] = 0
+                state.a[2] = 0
+                state.a[3] = 0
+                state.a[4] = 0
+                state.a[5] = 0
+        return state
+        
+    # prints game state to console 
+    def display(self, state):
+        print("\t")
+        bString = "   "
+        for i in range(0,6):
+            bString = bString + str(state.b[5-i]) + " "
+        print bString
+        print(str(state.b_fin) + "\t\t" + str(state.a_fin))
+        aString = "   "
+        for i in range(0,6):
+            aString = aString + str(state.a[i]) + " "
+        print aString
+                            
+                
 
 
 
