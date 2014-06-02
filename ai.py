@@ -9,8 +9,9 @@ class key:
         return "10jifn2eonvgp1o2ornfdlf-1230"
         
 class ai:
-    def __init__(self):
-        pass
+    def __init__(self, moves = 0):
+        #pass ****
+        self.moves = moves # ****
 
     class state:
         def __init__(self, a=[0,0,0,0,0,0], b=[0,0,0,0,0,0], a_fin=0, b_fin=0):
@@ -18,6 +19,10 @@ class ai:
             self.b = b
             self.a_fin = a_fin
             self.b_fin = b_fin
+            
+    class moveCounter:
+        def __init__(self, moves=0):
+            self.moves = moves
 
 
     # Kalah:
@@ -70,7 +75,7 @@ class ai:
         initial = ai.state(a, b, a_fin, b_fin)
         
         # set the maximum depth the search should execute
-        depth = 5
+        depth = 3
         
         # initial call of the minimax function
         # the helper method returns the desired move
@@ -86,12 +91,18 @@ class ai:
         highestAlpha = -sys.maxint
         possibleMoves = [0,1,2,3,4,5]
         for move in possibleMoves: 
+            self.moves = self.moves + 1
             print("move " + str(move)) # ****
             # don't consider moves with no stones
             if (state.a[move] > 0):
                 # get new game state after the move has been taken
-                newState = self.takeTurn(state, move, max)
-                print("first max turn")
+                newState = copy.deepcopy(state)
+                maxTurn = self.takeTurn(newState, move, max)
+                print("max turn: " + str(maxTurn))
+                # extend search if player gets another turn
+                if (maxTurn):
+                    depth = depth + 0
+                print("first max turn") # ****
                 self.display(newState) # ****
                 # if the depth is 0 return heuristic value without recursing 
                 if (depth == 1):
@@ -99,11 +110,14 @@ class ai:
                     print ("move: " + str(move) + "\theuristic value: " + str(alpha)) # ****
                 else:
                     # make recursive call. Decrease depth and switch turns
-                    alpha = self.minimax(newState, depth-1, alpha, beta, False)
+                    alpha = self.minimax(newState, depth-1, alpha, beta, maxTurn)
                 # keeps track of the highest alpha and the associated best move
                 if (alpha > highestAlpha):
                     highestAlpha = alpha
                     bestMove = move
+                # decrease depth for all other moves
+                if (maxTurn):
+                    depth = depth - 0
         return bestMove
         
     # minimax search function with alpha-beta pruning
@@ -119,18 +133,27 @@ class ai:
             # consider each of the six possible moves
             # TODO: order moves for efficiency 
             possibleMoves = [0,1,2,3,4,5]
-            for move in possibleMoves: 
+            for move in possibleMoves:
+                self.moves = self.moves + 1
                 # don't consider moves with no stones
                 if (state.a[move] > 0):
                     # get new game state after the move has been taken
-                    newState = self.takeTurn(state, move, mx)
+                    newState = copy.deepcopy(state)
+                    maxTurn = self.takeTurn(newState, move, mx)
+                    print("max turn: " + str(maxTurn))
+                    # extend search if player gets another turn
+                    if (maxTurn):
+                        depth = depth + 0
                     print("max turn")
                     self.display(newState) # ****
                     # make recursive call. Decrease depth and switch turns
-                    alpha = max(alpha, self.minimax(newState, depth-1, alpha, beta, False))
+                    alpha = max(alpha, self.minimax(newState, depth-1, alpha, beta, maxTurn))
                     if (beta <= alpha):
                         print("beta cut-off")
                         break # beta cut-off
+                    # decrease depth for all other moves
+                    if (maxTurn):
+                        depth = depth - 0
             return alpha
         # Min players turn
         else:
@@ -138,32 +161,74 @@ class ai:
             # TODO: order moves for efficiency 
             possibleMoves = [0,1,2,3,4,5]
             for move in possibleMoves:  
+                self.moves = self.moves + 1
                 # don't consider moves with no stones
                 if (state.b[move] > 0):
                     # get new game state after the move has been taken
-                    newState = self.takeTurn(state, move, mx)
+                    newState = copy.deepcopy(state)
+                    maxTurn = self.takeTurn(newState, move, mx)
+                    print("max turn: " + str(maxTurn))
+                    # extend search if player gets another turn
+                    if (maxTurn == False):
+                        depth = depth + 0
                     print("min turn")
                     self.display(newState) # ****
                     # make recursive call. Decrease depth and switch turns
-                    beta = min(beta, self.minimax(newState, depth-1, alpha, beta, True))
-                    if (beta <= alpha): # **** correct?
+                    beta = min(beta, self.minimax(newState, depth-1, alpha, beta, maxTurn))
+                    if (beta <= alpha): 
                         print("alpha cut-off")
                         break # alpha cut-off
+                    # decrease depth for all other moves
+                    if (maxTurn):
+                        depth = depth - 0
             return beta
     
     # rocks in kalah = 10 points
     # rocks in opposite kalah = -10 points
     def objective(self, state, max):
-        return state.a_fin * 10 + state.b_fin * -10
+        val = 0
+        # points in the Kalah's give most of the weight 
+        # first half of the game play a little more defensive
+        if (state.b_fin < 15):
+            val = state.a_fin * 10 + state.b_fin * -13
+        else:
+            val = state.a_fin * 13 + state.b_fin * -10
+            
+        # favour states that potentially lead to extra moves
+        for i in range(0,6):
+            if (state.a[i] == 6-i):
+                val = val + 3
+        for i in range(0,6):
+            if (state.b[i] == 6-i):
+                val = val - 3
+                
+        # favour states with empty holes that have rocks directly across
+        for i in range(0,6):
+            bonus = state.b[5-i]
+            if (state.a[i] == 0):
+                val = val + bonus/2
+        for i in range(0,6):
+            bonus = state.a[5-i]
+            if (state.b[i] == 0):
+                val = val - bonus/2
+        
+        # avoid running out of rocks
+        if (state.a[0] == 0 and state.a[1] == 0 and state.a[2] == 0 and state.a[3] == 0 and state.a[4] == 0 and state.a[5] == 0):
+            val = val - 10000
+        if (state.b[0] == 0 and state.b[1] == 0 and state.b[2] == 0 and state.b[3] == 0 and state.b[4] == 0 and state.b[5] == 0):
+            val = val + 10000
+        
+        return val
     
     # Returns the next game state based on the input parameters
     # current state
     # chosen move
     # whos turn
-    def takeTurn(self, oldState, move, max):
-        # deep copy so original state is not modified
-        state = copy.deepcopy(oldState)
+    def takeTurn(self, state, move, max):
+        # # deep copy so original state is not modified ****
+        # state = copy.deepcopy(oldState)
         # player a's turn
+        maxTurn = not max
         if max:
             # get numbers of rocks in chosen hole
             rocks = state.a[move]
@@ -196,7 +261,8 @@ class ai:
             
             # if the last rock lands in the kalah take another turn
             if (A == 6 and B == 0):
-                print("max takes another turn")
+                print("max takes another turn") # ****
+                maxTurn = max
                 
             # if there are no rocks on a's side all b's rocks go to b's kalah
             if (state.a[0] == 0 and state.a[1] == 0 and state.a[2] == 0 and state.a[3] == 0 and state.a[4] == 0 and state.a[5] == 0):
@@ -241,6 +307,7 @@ class ai:
             # if the last rock lands in the kalah take another turn
             if (B == 6 and A == 0):
                 print("min takes another turn")
+                maxTurn = max
                 
             # if there are no rocks on b's side all a's rocks go to a's kalah
             if (state.b[0] == 0 and state.b[1] == 0 and state.b[2] == 0 and state.b[3] == 0 and state.b[4] == 0 and state.b[5] == 0):
@@ -251,7 +318,7 @@ class ai:
                 state.a[3] = 0
                 state.a[4] = 0
                 state.a[5] = 0
-        return state
+        return maxTurn
         
     # prints game state to console 
     def display(self, state):
